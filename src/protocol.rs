@@ -407,6 +407,22 @@ pub(crate) struct SetNotify {
 
 // RESPONSES
 
+fn deserialize_hint_cost<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = u64::deserialize(deserializer)?;
+    Ok(value.min(u64::from(u8::MAX)) as u8)
+}
+
+fn deserialize_optional_hint_cost<'de, D>(deserializer: D) -> Result<Option<u8>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Option::<u64>::deserialize(deserializer)?;
+    Ok(value.map(|value| value.min(u64::from(u8::MAX)) as u8))
+}
+
 #[serde_as]
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct RoomInfo {
@@ -416,7 +432,8 @@ pub(crate) struct RoomInfo {
     #[serde(rename = "password")]
     pub(crate) password_required: bool,
     pub(crate) permissions: PermissionMap,
-    pub(crate) hint_cost: u64,
+    #[serde(deserialize_with = "deserialize_hint_cost")]
+    pub(crate) hint_cost: u8,
     pub(crate) location_check_points: u64,
     pub(crate) games: UstrSet,
     pub(crate) datapackage_checksums: UstrMap<String>,
@@ -502,7 +519,8 @@ pub(crate) struct RoomUpdate {
     // Copied from RoomInfo
     pub(crate) tags: Option<UstrSet>,
     pub(crate) permissions: Option<PermissionMap>,
-    pub(crate) hint_cost: Option<u64>,
+    #[serde(default, deserialize_with = "deserialize_optional_hint_cost")]
+    pub(crate) hint_cost: Option<u8>,
     pub(crate) location_check_points: Option<u64>,
     // Copied from Connected
     pub(crate) hint_points: Option<i64>,
