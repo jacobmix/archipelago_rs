@@ -412,6 +412,7 @@ where
     D: Deserializer<'de>,
 {
     let value = u64::deserialize(deserializer)?;
+    // TODO: Use u8::saturating_truncate once it is no longer experimental.
     Ok(value.min(u64::from(u8::MAX)) as u8)
 }
 
